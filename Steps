@@ -1,0 +1,79 @@
+🚀 Step-by-Step Deployment Guide
+
+1️⃣ Prerequisites:
+
+✅ AWS Account with necessary permissions.
+✅ Docker Installed on your local machine.
+✅ AWS CLI Installed and configured.
+✅ Amazon ECS CLI Installed (Optional for managing ECS tasks).
+
+2️⃣ Build and Push Docker Image to Amazon ECR:
+
+Step 1: Create an Amazon ECR Repository
+aws ecr create-repository --repository-name my-ecs-app
+
+Step 2: Authenticate Docker to ECR
+aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com
+
+Step 3: Build and Push Docker Image
+docker build -t my-ecs-app .
+docker tag my-ecs-app:latest <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/my-ecs-app:latest
+docker push <aws_account_id>.dkr.ecr.<your-region>.amazonaws.com/my-ecs-app:latest
+
+3️⃣ Create an ECS Cluster (EC2 Launch Type):
+
+Step 1: Create an ECS Cluster
+aws ecs create-cluster --cluster-name my-ecs-cluster
+
+Step 2: Register an ECS Task Definition
+Define the task definition JSON file (ecs-task-definition.json) and register it:
+aws ecs register-task-definition --cli-input-json file://ecs-task-definition.json
+
+Step 3: Create an ECS Service
+aws ecs create-service --cluster my-ecs-cluster \
+  --service-name my-ecs-service \
+  --task-definition my-ecs-task \
+  --desired-count 2 \
+  --launch-type EC2
+
+4️⃣ Deploy an Application Load Balancer (ALB):
+
+Step 1: Create an ALB & Target Group
+aws elbv2 create-load-balancer --name my-ecs-alb \
+  --subnets subnet-xxx subnet-yyy \
+  --security-groups sg-xxx
+
+Step 2: Register ECS Tasks with ALB Target Group
+aws elbv2 register-targets --target-group-arn arn:aws:... --targets Id=i-xxx Id=i-yyy
+
+Step 3: Configure ALB Listener for HTTP Requests
+aws elbv2 create-listener --load-balancer-arn arn:aws:... \
+  --protocol HTTP --port 80 \
+  --default-actions Type=forward,TargetGroupArn=arn:aws:...
+
+5️⃣ Enable Auto Scaling for ECS Tasks:
+
+aws application-autoscaling register-scalable-target \
+  --service-namespace ecs --resource-id service/my-ecs-cluster/my-ecs-service \
+  --scalable-dimension ecs:service:DesiredCount --min-capacity 1 --max-capacity 5
+
+6️⃣ (Optional) Deploy Using AWS Fargate:
+
+For serverless deployment, update the launch type in the ECS task definition:
+
+"requiresCompatibilities": ["FARGATE"],
+"networkMode": "awsvpc"
+
+Then deploy using the updated task definition.
+
+📌 Testing & Monitoring
+
+✅ Find the ALB URL and access the deployed application:
+
+aws elbv2 describe-load-balancers --query "LoadBalancers[*].DNSName"
+
+✅ Monitor logs using CloudWatch:
+
+aws logs describe-log-groups
+aws logs tail /ecs/my-ecs-cluster
+
