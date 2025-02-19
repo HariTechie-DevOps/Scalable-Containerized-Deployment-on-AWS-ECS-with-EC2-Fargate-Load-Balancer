@@ -15,3 +15,18 @@ This project demonstrates how to deploy a containerized application on AWS ECS u
 
 The architecture ensures scalability, high availability, and cost efficiency by leveraging AWS-native services.
 
+# 📸 Architecture Diagram
+
+# High-Level Flow:
+
+1️⃣ Develop & Containerize the App: Build a Dockerized web application.
+
+2️⃣ Push Image to Amazon ECR: Store the container image in a private repository.
+
+3️⃣ Deploy to Amazon ECS (EC2 Launch Type): Run the container on an EC2-backed ECS cluster.
+
+4️⃣ Configure an ALB: Distribute incoming requests across ECS tasks.
+
+5️⃣ Enable Auto Scaling: Ensure high availability and scalability with Auto Scaling Groups.
+
+6️⃣ Deploy with AWS Fargate (Optional): For a fully managed, serverless container deployment.
